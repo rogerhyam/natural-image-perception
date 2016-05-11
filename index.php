@@ -29,9 +29,8 @@ $payload->setImage($image);
 $body = new Google_Service_Vision_BatchAnnotateImagesRequest();
 $body->setRequests([$payload]);
 
-$res = $service->images->annotate($body);
-
-$responses = $res->getResponses();
+//$res = $service->images->annotate($body);
+//$responses = $res->getResponses();
 
 ?>
 <!DOCTYPE html>
@@ -43,7 +42,10 @@ $responses = $res->getResponses();
         <h1>Natural Image Perception</h1>
         <p>This is a test application</p>
 
+
+This is broken to prevent the api useage being overdone..
 <?php
+
 
 echo "<img style=\"max-width: 300px;\" src=\"$file_uri\">";
 

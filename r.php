@@ -19,6 +19,10 @@
         $headers[] = "L_" . $row['id'] . "_" . $safe_name;
     }
     
+    // scores for naturalness and arificialness
+    $headers[] = 'naturalness';
+    $headers[] = 'artificialness';
+    
     // next we build in the columns from berman data
     $berman_cols = array();
     $results = $mysqli->query("SHOW COLUMNS IN berman_data");
@@ -45,15 +49,31 @@
         
         $csvRow = array();
     
+        // image name stripped from the image path
+        $image_name = substr($image['path'], strrpos($image['path'], '/') + 1);
+        $image_name = substr($image_name, 0, strpos($image_name, '.'));
+        
         // add the basic info
-        $csvRow[] = $image['id'];
+        $csvRow[] = str_pad($image['id'],  3, '0', STR_PAD_LEFT) . '_' . $image_name;
         $csvRow[] = $image['path'];
         
         // add the label scoring
-        $results = $mysqli->query("SELECT l.id as id FROM `label` AS l JOIN scoring AS s ON l.id = s.label_id WHERE s.image_id = {$image['id']} ");
+        $results = $mysqli->query("SELECT l.id as id, l.naturalness as naturalness FROM `label` AS l JOIN scoring AS s ON l.id = s.label_id WHERE s.image_id = {$image['id']} ");
         $scores = array();
+        $naturals = array();
+        $artificials = array();
         while($row = $results->fetch_assoc()){
+            
             $scores[] = $row['id'];
+            
+            if($row['naturalness'] > 0){
+                $naturals[] =  $row['id'];
+            }
+            
+            if($row['naturalness'] < 0){
+                $artificials = $row['id'];
+            }
+            
         }
         foreach($labels as $l){
             if(in_array($l['id'], $scores)){
@@ -62,13 +82,18 @@
                 $csvRow[] = 0;
             }
         }
-
-    
+        
+        // add in the naturalness and arificialness 
+        if(count($scores) > 0){
+            $csvRow[] = count($naturals) / count($scores);
+            $csvRow[] = count($artificials) / count($scores);    
+        }else{
+            $csvRow[] = 0;
+            $csvRow[] = 0;    
+        }
+        
         // now tag the berman results on the end
-        // need to find the row that matches the image name stripped from the 
-        // image path
-        $image_name = substr($image['path'], strrpos($image['path'], '/') + 1);
-        $image_name = substr($image_name, 0, strpos($image_name, '.'));
+        // need to find the row that matches the image name
         $results = $mysqli->query("SELECT * FROM berman_data WHERE ImageName = '$image_name' ");
         $rows = $results->fetch_all(MYSQLI_ASSOC);
         if(count($rows) > 0){
