@@ -8,7 +8,7 @@
     so we can batch and not re-do them.
 */ 
 
-$images_sql = "SELECT * FROM image";
+$images_sql = "SELECT * FROM image WHERE path LIKE '%/SV_%' and id = 1076";
 
 // include composer dependencies and db setup
 require_once('config.php');
