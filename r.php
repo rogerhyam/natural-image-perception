@@ -22,6 +22,7 @@
     // scores for naturalness and arificialness
     $headers[] = 'naturalness';
     $headers[] = 'artificialness';
+    $headers[] = 'label_count';
     
     // next we build in the columns from berman data
     $berman_cols = array();
@@ -58,39 +59,9 @@
         $csvRow[] = $image['path'];
         
         // add the label scoring
-        $results = $mysqli->query("SELECT l.id as id, l.naturalness as naturalness FROM `label` AS l JOIN scoring AS s ON l.id = s.label_id WHERE s.image_id = {$image['id']} ");
-        $scores = array();
-        $naturals = array();
-        $artificials = array();
-        while($row = $results->fetch_assoc()){
-            
-            $scores[] = $row['id'];
-            
-            if($row['naturalness'] > 0){
-                $naturals[] =  $row['id'];
-            }
-            
-            if($row['naturalness'] < 0){
-                $artificials = $row['id'];
-            }
-            
-        }
-        foreach($labels as $l){
-            if(in_array($l['id'], $scores)){
-                $csvRow[] = 1;
-            }else{
-                $csvRow[] = 0;
-            }
-        }
-        
-        // add in the naturalness and arificialness 
-        if(count($scores) > 0){
-            $csvRow[] = count($naturals) / count($scores);
-            $csvRow[] = count($artificials) / count($scores);    
-        }else{
-            $csvRow[] = 0;
-            $csvRow[] = 0;    
-        }
+        $csvRow[] = $image['calc_naturalness'];
+        $csvRow[] = $image['calc_artificialness'];  
+        $csvRow[] = $image['label_count'];  
         
         // now tag the berman results on the end
         // need to find the row that matches the image name

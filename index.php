@@ -1,68 +1,119 @@
 <?php
 
 // include your composer dependencies
-require_once 'vendor/autoload.php';
+require_once 'config.php';
 
+$subject = false;
 
-// let us get some credentials..
-// these are typically set in the GOOGLE_APPLICATION_CREDENTIALS env
-$client = new Google_Client();
-$client->useApplicationDefaultCredentials();
-$client->setScopes([Google_Service_Vision::CLOUD_PLATFORM]);
-$service = new Google_Service_Vision($client);
+// if this is a post save the data first
+if($_SERVER['REQUEST_METHOD'] === 'POST'){
+    
+    // we must have a $subject or we can do nothing
+    $subject = trim($_POST['subject']);
+    if(!$subject){
+        echo "We must have a subject";
+        exit;
+    }
+    
+    if(isset($_POST["naturalness"]) && isset($_POST["image_id"])){
+        
+        $image_id = $_POST["image_id"];
+        $naturalness = $_POST["naturalness"];
+        
+        // save the naturalness score for this image.
+        $mysqli->query("INSERT INTO image_evaluation (image_id, naturalness, subject) VALUES ($image_id, $naturalness, '$subject')");
+        echo $mysqli->error;
+            
+    }
+    
+    // get a list of possible images
+    $sql = "SELECT i.id, i.path FROM image as i LEFT JOIN image_evaluation as e on i.id = e.image_id AND e.subject = '$subject' WHERE e.id is null  AND i.evaluation = 1";
+    $result  = $mysqli->query($sql);
+    $rows = $result->fetch_all(MYSQLI_ASSOC);
+    shuffle($rows);
+    $remaining = count($rows);
+    $row = array_pop($rows);
+    $image_id = $row['id'];
+    $image_path = $row['path'];
+    
+}
 
-$feature = new Google_Service_Vision_Feature();
-$feature->setType('LABEL_DETECTION');
-$feature->setMaxResults(200);
-
-$file_uri = 'data/berman/MDS600X800/MDS1.jpg';
-
-$image_data = file_get_contents($file_uri);
-$image_base64 = base64_encode($image_data);
-$image = new Google_Service_Vision_Image();
-$image->setContent($image_base64);
-
-$payload = new Google_Service_Vision_AnnotateImageRequest();
-$payload->setFeatures([$feature]);
-$payload->setImage($image);
-
-$body = new Google_Service_Vision_BatchAnnotateImagesRequest();
-$body->setRequests([$payload]);
-
-//$res = $service->images->annotate($body);
-//$responses = $res->getResponses();
 
 ?>
 <!DOCTYPE html>
 <html>
     <head>
-        <title>Natural Image Perception</title>
+        <title>Natural Image Evaluation Survey</title>
+        <style>
+            body{
+                font-family: sans-serif;
+            }
+            #wrapper{
+                margin-left: 1em;
+                text-align: center;
+            }
+            #button-block input{
+                width: 40px;
+                height: 40px;
+                font-size: 30px;
+            }
+            #button-block{
+                display: inline-block;
+                font-size: 30px;
+            }
+        </style>
     </head>
     <body>
-        <h1>Natural Image Perception</h1>
-        <p>This is a test application</p>
-
-
-This is broken to prevent the api useage being overdone..
-<?php
-
-
-echo "<img style=\"max-width: 300px;\" src=\"$file_uri\">";
-
-foreach($responses as $r){
-    $annotations = $r->getLabelAnnotations(); // Google_Service_Vision_EntityAnnotation
-    foreach($annotations as $a){
-        echo "<div>";
-        echo $a->getDescription();
-        echo ":";
-        echo $a->getScore();
-        echo ":";
-        echo $a->getMid();
-        echo "</div>";
-    }
-    
-}
-
+        <div id="wrapper">
+        <form method="POST" action="index.php">
+        
+        <div id="subject-block">
+            <p>Your Name: <input type="text" name="subject" value="<?php echo $subject ?>"/></p>
+            
+            
+        </div>
+        
+<?php 
+    // we display the picture and scoring block only if we have a subject
+    if($subject && $image_path){
 ?>
+        <p><?php echo $remaining ?> of 100 remaining.</p>
+        <input type="hidden" name="image_id" value="<?php echo $image_id ?>"/>
+        <div id="image-block">
+            <img src="<?php echo $image_path ?>"/>
+        </div>
+        <div id="button-block">
+            Artificial
+            <input type="submit" name="naturalness" value="1"/>
+            <input type="submit" name="naturalness" value="2"/>
+            <input type="submit" name="naturalness" value="3"/>
+            <input type="submit" name="naturalness" value="4"/>
+            <input type="submit" name="naturalness" value="5"/>
+            <input type="submit" name="naturalness" value="6"/>
+            <input type="submit" name="naturalness" value="7"/>
+            Natural
+        </div>
+        <p>
+            How natural are the things in this image?
+        </p>
+
+<?php
+    }elseif ($subject && !$image_path) {
+?>
+    <h2>Finished! Thank you for your hard work.</h2>
+    <a href="index.php">Next person.</a>
+<?php
+    }else{ // end subject check
+?>
+        <div id="start-block">
+            <input type="submit" name="start" value="Start"/>
+        </div>
+<?php
+    } // end no subject check
+?>
+    
+        </form>
+        
+        </div>
     </body>
 </html>
