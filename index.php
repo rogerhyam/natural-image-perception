@@ -83,7 +83,7 @@ if($_SERVER['REQUEST_METHOD'] === 'POST'){
             <img src="<?php echo $image_path ?>"/>
         </div>
         <div id="button-block">
-            Artificial
+            Not Nature
             <input type="submit" name="naturalness" value="1"/>
             <input type="submit" name="naturalness" value="2"/>
             <input type="submit" name="naturalness" value="3"/>
@@ -91,10 +91,10 @@ if($_SERVER['REQUEST_METHOD'] === 'POST'){
             <input type="submit" name="naturalness" value="5"/>
             <input type="submit" name="naturalness" value="6"/>
             <input type="submit" name="naturalness" value="7"/>
-            Natural
+            Nature
         </div>
         <p>
-            How natural are the things in this image?
+            How much nature is there in this image?
         </p>
 
 <?php

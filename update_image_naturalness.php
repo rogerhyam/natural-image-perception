@@ -56,9 +56,6 @@
             $artificialness = 0;    
         }
         
-        
-        
-        
         $sql = "UPDATE image SET calc_naturalness = $naturalness, calc_artificialness = $artificialness, label_count = $label_count WHERE id = $image_id";
         $mysqli->query($sql);
         
